@@ -1,34 +1,32 @@
-name: Deploy to AWS EC2
+name: Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
 jobs:
-  deploy:
+  Deploy:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
-      - name: Deploy to EC2
+      - name: Build & Deploy
         env:
-          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-          HOST: ${{ secrets.EC2_HOST }}
-          USER: ${{ secrets.EC2_USER }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          HOSTNAME: ${{secrets.HOSTNAME}}
+          USER_NAME: ${{secrets.USER_NAME}}
+
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} << 'EOF'
-            set -e
-            echo "Connected to ${HOST}"
-            cd /var/www || exit 1
-            if [ ! -d ".git" ]; then
-              echo "Not a git repository"
-              exit 1
-            fi
-            sudo git pull origin main
-            sudo npm install --production
-            sudo npm run build --if-present
-            if ! command -v pm2 &> /dev/null; then
-              sudo npm install -g pm2
-            fi
-            sudo pm2 restart app || sudo pm2 start app.js --name app
-          EOF
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
+
+              # Now we have got the access of EC2 and we will start the deploy .
+              cd /var/www &&
+             
+              sudo git pull origin main &&
+              sudo npm i &&
+              
+              pm2 restart app.js &&
+              sudo nginx -s reload
+              '
