@@ -29,4 +29,4 @@ jobs:
               
               pm2 restart app.js &&
               sudo nginx -s reload
-              '
+               '
